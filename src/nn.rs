@@ -24,12 +24,15 @@ impl NN {
             delta.component_mul_assign(&(layer.activation.derv)(&layer.z));
 
             let dw = &delta * (if i == 0 { &x } else { &self.layers[i - 1].a }).transpose();
-            let db = &delta;
+            let db = delta.clone();
+
+            if i > 0 {
+                // we have to use the old weights
+                delta = self.layers[i].weights.transpose() * delta;
+            }
 
             self.layers[i].bias -= ALPHA * db;
             self.layers[i].weights -= ALPHA * dw;
-
-            delta = self.layers[i].weights.transpose() * delta;
         }
     }
 }
