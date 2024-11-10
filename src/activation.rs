@@ -14,6 +14,14 @@ impl Activation {
         }
     }
 
+    #[allow(non_snake_case)]
+    pub fn ReLu_leaky() -> Self {
+        Activation {
+            func: |col| col.map(|x| if x > 0. { x } else { 0.01 * x }),
+            derv: |col| col.map(|x| if x > 0. { 1. } else { 0.01 }),
+        }
+    }
+
     pub fn sigmoid() -> Self {
         Activation {
             func: |col| col.map(sigmoid),
