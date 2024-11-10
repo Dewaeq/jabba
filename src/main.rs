@@ -12,8 +12,8 @@ pub const ALPHA: f32 = 0.1;
 
 fn main() {
     let mut nn = NNBuilder::new(2)
-        .add_layer(2, Activation::ReLu())
-        .add_layer(1, Activation::ReLu())
+        .add_layer(2, Activation::sigmoid())
+        .add_layer(1, Activation::sigmoid())
         .build();
 
     let training_data = dmatrix![
