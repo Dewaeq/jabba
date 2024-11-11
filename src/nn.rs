@@ -15,7 +15,13 @@ impl NN {
         data.clone()
     }
 
-    fn back_propagate(&mut self, x: &Matrix, label: &Matrix, predicted: &Matrix) {
+    fn back_propagate(
+        &mut self,
+        x: &Matrix,
+        label: &Matrix,
+        predicted: &Matrix,
+        learning_rate: f32,
+    ) {
         let cost = predicted - label;
         let mut delta = cost;
 
@@ -33,7 +39,6 @@ impl NN {
                 delta = self.layers[i].weights.transpose() * delta;
             }
 
-            let learning_rate = self.options.learning_rate;
             self.layers[i].bias -= learning_rate * db;
             self.layers[i].weights -= learning_rate * dw;
         }
@@ -42,26 +47,40 @@ impl NN {
     pub fn train(&mut self, x_train: &Matrix, y_train: &Matrix, epochs: usize) -> f32 {
         let num_samples = x_train.ncols();
         let batch_size = self.options.batch_size;
-        let mut loss = 0.;
+
+        let mut total_loss = 0.;
+        let mut learning_rate = self.options.learning_rate;
 
         for epoch in 0..epochs {
+            let mut current_loss = 0.;
             for i in (0..num_samples).step_by(batch_size) {
                 let batch_x = x_train.columns_range(i..(i + batch_size).min(num_samples));
                 let batch_y = y_train.columns_range(i..(i + batch_size).min(num_samples));
                 let predicted = self.feed_forward(&batch_x.into());
 
-                self.back_propagate(&batch_x.into(), &batch_y.into(), &predicted);
-                loss += (predicted - batch_y).norm_squared();
+                self.back_propagate(&batch_x.into(), &batch_y.into(), &predicted, learning_rate);
+                current_loss += (predicted - batch_y).norm_squared();
             }
+
+            current_loss /= num_samples as f32;
+            total_loss += current_loss;
 
             if self.options.log_interval.is_some_and(|x| epoch % x == 0) {
                 print!("\x1B[2J\x1B[1;1H");
-                println!("avg loss: {}", loss / epoch as f32);
-                println!("epoch {epoch}");
+                println!("avg loss:\t{}", total_loss / epoch as f32);
+                println!("current loss:\t{current_loss}");
+                println!("epoch:\t\t{epoch}");
+                println!("learning rate:\t{learning_rate}");
             }
+
+            learning_rate = self.update_learning_rate(learning_rate, epoch, current_loss);
         }
 
-        loss / epochs as f32
+        total_loss / epochs as f32
+    }
+
+    fn update_learning_rate(&self, learning_rate: f32, epoch: usize, loss: f32) -> f32 {
+        learning_rate / (1. + self.options.decay_rate * epoch as f32)
     }
 }
 
@@ -69,6 +88,7 @@ pub struct NNOptions {
     pub log_interval: Option<usize>,
     pub batch_size: usize,
     pub learning_rate: f32,
+    pub decay_rate: f32,
 }
 
 impl Default for NNOptions {
@@ -77,6 +97,7 @@ impl Default for NNOptions {
             batch_size: 1,
             learning_rate: 0.1,
             log_interval: None,
+            decay_rate: 0.,
         }
     }
 }
