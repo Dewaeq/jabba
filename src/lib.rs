@@ -1,8 +1,9 @@
-use nalgebra::{DMatrix, DVector};
+use nalgebra::DMatrix;
 
 pub mod activation;
-mod layer;
 pub mod nn;
+pub mod storage;
 
-pub type Column = DVector<f32>;
+mod layer;
+
 pub type Matrix = DMatrix<f32>;

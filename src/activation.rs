@@ -1,8 +1,31 @@
+use std::str::FromStr;
+
 use crate::Matrix;
 
+#[derive(Debug)]
+pub(crate) enum ActivationType {
+    ReLu,
+    ReLuLeaky,
+    Sigmoid,
+}
+
+impl FromStr for ActivationType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "ReLu" => Ok(ActivationType::ReLu),
+            "ReLuLeaky" => Ok(ActivationType::ReLuLeaky),
+            "Sigmoid" => Ok(ActivationType::Sigmoid),
+            _ => Err(()),
+        }
+    }
+}
+
 pub struct Activation {
-    pub func: fn(&Matrix) -> Matrix,
-    pub derv: fn(&Matrix) -> Matrix,
+    pub(crate) func: fn(&Matrix) -> Matrix,
+    pub(crate) derv: fn(&Matrix) -> Matrix,
+    pub(crate) activation_type: ActivationType,
 }
 
 impl Activation {
@@ -11,6 +34,7 @@ impl Activation {
         Activation {
             func: |m| m.map(|x| x.max(0.)),
             derv: |m| m.map(|x| if x > 0. { 1. } else { 0. }),
+            activation_type: ActivationType::ReLu,
         }
     }
 
@@ -19,6 +43,7 @@ impl Activation {
         Activation {
             func: |m| m.map(|x| if x > 0. { x } else { 0.01 * x }),
             derv: |m| m.map(|x| if x > 0. { 1. } else { 0.01 }),
+            activation_type: ActivationType::ReLuLeaky,
         }
     }
 
@@ -31,6 +56,7 @@ impl Activation {
                     s * (1. - s)
                 })
             },
+            activation_type: ActivationType::Sigmoid,
         }
     }
 }

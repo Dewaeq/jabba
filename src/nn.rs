@@ -1,8 +1,8 @@
 use crate::{activation::Activation, layer::Layer, Matrix};
 
 pub struct NN {
-    layers: Vec<Layer>,
-    options: NNOptions,
+    pub(crate) layers: Vec<Layer>,
+    pub(crate) options: NNOptions,
 }
 
 impl NN {
