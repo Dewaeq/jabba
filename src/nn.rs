@@ -40,7 +40,7 @@ impl NN {
     }
 
     pub fn train(&mut self, x_train: &Matrix, y_train: &Matrix, epochs: usize) -> f32 {
-        let num_samples = x_train.shape().1;
+        let num_samples = x_train.ncols();
         let batch_size = self.options.batch_size;
         let mut loss = 0.;
 
@@ -103,7 +103,7 @@ impl NNBuilder {
 
     pub fn add_layer(mut self, num_neurons: usize, activation: Activation) -> Self {
         let num_inputs = if let Some(layer) = self.layers.last() {
-            layer.bias.shape().0
+            layer.bias.nrows()
         } else {
             self.num_inputs
         };

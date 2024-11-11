@@ -26,7 +26,9 @@ impl Layer {
 
     pub fn step(&mut self, data: &DMatrix<f32>) -> DMatrix<f32> {
         self.z = &self.weights * data;
-        self.z.column_iter_mut().for_each(|mut col| col += &self.bias);
+        self.z
+            .column_iter_mut()
+            .for_each(|mut col| col += &self.bias);
         self.a = (self.activation.func)(&self.z);
 
         self.a.clone()
