@@ -2,6 +2,7 @@ use crate::{activation::Activation, layer::Layer, Matrix};
 
 pub struct NN {
     layers: Vec<Layer>,
+    options: NNOptions,
 }
 
 impl NN {
@@ -14,13 +15,7 @@ impl NN {
         data.clone()
     }
 
-    pub fn back_propagate(
-        &mut self,
-        x: &Matrix,
-        label: &Matrix,
-        predicted: &Matrix,
-        learning_rate: f32,
-    ) {
+    fn back_propagate(&mut self, x: &Matrix, label: &Matrix, predicted: &Matrix) {
         let cost = predicted - label;
         let mut delta = cost;
 
@@ -38,20 +33,15 @@ impl NN {
                 delta = self.layers[i].weights.transpose() * delta;
             }
 
+            let learning_rate = self.options.learning_rate;
             self.layers[i].bias -= learning_rate * db;
             self.layers[i].weights -= learning_rate * dw;
         }
     }
 
-    pub fn train(
-        &mut self,
-        x_train: &Matrix,
-        y_train: &Matrix,
-        epochs: usize,
-        batch_size: usize,
-        learning_rate: f32,
-    ) -> f32 {
+    pub fn train(&mut self, x_train: &Matrix, y_train: &Matrix, epochs: usize) -> f32 {
         let num_samples = x_train.shape().1;
+        let batch_size = self.options.batch_size;
         let mut loss = 0.;
 
         for epoch in 0..epochs {
@@ -60,32 +50,55 @@ impl NN {
                 let batch_y = y_train.columns_range(i..(i + batch_size).min(num_samples));
                 let predicted = self.feed_forward(&batch_x.into());
 
-                self.back_propagate(&batch_x.into(), &batch_y.into(), &predicted, learning_rate);
+                self.back_propagate(&batch_x.into(), &batch_y.into(), &predicted);
                 loss += (predicted - batch_y).norm_squared();
             }
 
-            //if epoch % 10_000 == 0 {
-            //print!("\x1B[2J\x1B[1;1H");
-            //println!("avg loss: {}", loss / epoch as f32);
-            //println!("epoch {epoch}");
-            //}
+            if self.options.log_interval.is_some_and(|x| epoch % x == 0) {
+                print!("\x1B[2J\x1B[1;1H");
+                println!("avg loss: {}", loss / epoch as f32);
+                println!("epoch {epoch}");
+            }
         }
 
         loss / epochs as f32
     }
 }
 
+pub struct NNOptions {
+    pub log_interval: Option<usize>,
+    pub batch_size: usize,
+    pub learning_rate: f32,
+}
+
+impl Default for NNOptions {
+    fn default() -> Self {
+        NNOptions {
+            batch_size: 1,
+            learning_rate: 0.1,
+            log_interval: None,
+        }
+    }
+}
+
+#[derive(Default)]
 pub struct NNBuilder {
     layers: Vec<Layer>,
     num_inputs: usize,
+    options: NNOptions,
 }
 
 impl NNBuilder {
     pub fn new(num_inputs: usize) -> Self {
         NNBuilder {
-            layers: vec![],
             num_inputs,
+            ..Default::default()
         }
+    }
+
+    pub fn options(mut self, options: NNOptions) -> Self {
+        self.options = options;
+        self
     }
 
     pub fn add_layer(mut self, num_neurons: usize, activation: Activation) -> Self {
@@ -104,6 +117,7 @@ impl NNBuilder {
     pub fn build(self) -> NN {
         NN {
             layers: self.layers,
+            options: self.options,
         }
     }
 }
