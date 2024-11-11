@@ -9,8 +9,8 @@ pub struct Layer {
     pub weights: DMatrix<f32>,
     pub activation: Activation,
 
-    pub a: Column,
-    pub z: Column,
+    pub a: DMatrix<f32>,
+    pub z: DMatrix<f32>,
 }
 
 impl Layer {
@@ -19,13 +19,14 @@ impl Layer {
             bias: random_bias(num_neurons),
             weights: random_weights(num_neurons, num_inputs),
             activation,
-            a: Column::zeros(num_neurons),
-            z: Column::zeros(num_neurons),
+            a: DMatrix::<f32>::zeros(num_neurons, 0),
+            z: DMatrix::<f32>::zeros(num_neurons, 0),
         }
     }
 
-    pub fn step(&mut self, data: &Column) -> Column {
-        self.z = &self.weights * data + &self.bias;
+    pub fn step(&mut self, data: &DMatrix<f32>) -> DMatrix<f32> {
+        self.z = &self.weights * data;
+        self.z.column_iter_mut().for_each(|mut col| col += &self.bias);
         self.a = (self.activation.func)(&self.z);
 
         self.a.clone()
