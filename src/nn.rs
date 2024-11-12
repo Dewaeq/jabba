@@ -28,19 +28,14 @@ impl NN {
         let n = self.layers.len();
 
         for i in (0..n).rev() {
-            let layer = &self.layers[i];
-            delta.component_mul_assign(&(layer.activation.derv)(&layer.z));
+            let (layer, prev_a) = if i == 0 {
+                (&mut self.layers[i], x)
+            } else {
+                let (left, right) = self.layers.split_at_mut(i);
+                (&mut right[0], &left.last().unwrap().a)
+            };
 
-            let dw = &delta * (if i == 0 { x } else { &self.layers[i - 1].a }).transpose();
-            let db = delta.column_sum();
-
-            if i > 0 {
-                // we have to use the old weights
-                delta = self.layers[i].weights.transpose() * delta;
-            }
-
-            self.layers[i].bias -= learning_rate * db;
-            self.layers[i].weights -= learning_rate * dw;
+            delta = layer.back_propagate(delta, prev_a, learning_rate);
         }
     }
 

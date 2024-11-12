@@ -3,7 +3,7 @@ use rand_distr::{Distribution, Normal};
 
 use crate::{activation::Activation, Matrix};
 
-pub struct Layer {
+pub(crate) struct Layer {
     pub bias: Matrix,
     pub weights: Matrix,
     pub activation: Activation,
@@ -13,7 +13,7 @@ pub struct Layer {
 }
 
 impl Layer {
-    pub fn new(num_inputs: usize, num_neurons: usize, activation: Activation) -> Self {
+    pub(crate) fn new(num_inputs: usize, num_neurons: usize, activation: Activation) -> Self {
         Layer {
             bias: random_bias(num_neurons),
             weights: random_weights(num_neurons, num_inputs),
@@ -23,7 +23,7 @@ impl Layer {
         }
     }
 
-    pub fn step(&mut self, data: &Matrix) -> Matrix {
+    pub(crate) fn step(&mut self, data: &Matrix) -> Matrix {
         self.z = &self.weights * data;
         self.z
             .column_iter_mut()
@@ -31,6 +31,24 @@ impl Layer {
         self.a = (self.activation.func)(&self.z);
 
         self.a.clone()
+    }
+
+    pub(crate) fn back_propagate(
+        &mut self,
+        mut delta: Matrix,
+        prev_a: &Matrix,
+        learning_rate: f32,
+    ) -> Matrix {
+        delta.component_mul_assign(&(self.activation.derv)(&self.z));
+
+        let dw = learning_rate * &delta * prev_a.transpose();
+        let db = learning_rate * delta.column_sum();
+
+        self.weights -= dw;
+        self.bias -= db;
+
+        let next_delta = self.weights.transpose() * delta;
+        next_delta
     }
 }
 
