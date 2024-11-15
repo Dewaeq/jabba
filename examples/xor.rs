@@ -25,7 +25,7 @@ fn main() {
         .add_layer(1, Activation::sigmoid())
         .build();
 
-    let loss = nn.train(&x_train, &y_train, 100_000);
+    let loss = nn.train(&x_train, &y_train, &x_train, &y_train, 100_000);
     let prediction = nn.feed_forward(&x_train);
 
     println!("loss: {loss}");
