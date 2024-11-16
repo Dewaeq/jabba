@@ -25,8 +25,12 @@ fn main() {
     let x_train = training_data.rows_range(1..).clone_owned();
     let y_train = one_hot(&training_data.rows_range(0..1).clone_owned());
 
+    let x_test = testing_data.rows_range(1..).clone_owned();
+    let y_test = one_hot(&testing_data.rows_range(0..1).clone_owned());
+
     let options = NNOptions {
         log_interval: Some(1),
+        test_interval: Some(1),
         batch_size: 64,
         learning_rate: 0.003,
         decay_rate: 0.000006,
@@ -40,7 +44,7 @@ fn main() {
         .add_layer(10, Activation::sigmoid())
         .build();
 
-    nn.train(&x_train, &y_train, 1000);
+    nn.train(&x_train, &y_train, &x_test, &y_test, 1000);
 
     File::create("nn.txt").unwrap();
     storage::write_to("nn.txt", &nn).unwrap()
