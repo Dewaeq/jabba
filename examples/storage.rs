@@ -17,7 +17,7 @@ fn main() {
         .collect::<Vec<_>>();
 
     let x = Matrix::from_column_slice(784, 1, &inputs);
-    let mut nn = read_from("examples/nn.txt").unwrap();
+    let mut nn = read_from("examples/mnist-nn.txt").unwrap();
 
     let predicted = nn.feed_forward(&x);
     let v = predicted
