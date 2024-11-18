@@ -1,7 +1,5 @@
 use std::{
-    env,
-    fs::{self, File},
-    io::Read,
+    env, fs, io::Read
 };
 
 use image::{imageops::FilterType, open};
