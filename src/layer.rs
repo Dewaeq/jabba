@@ -25,7 +25,7 @@ impl Layer {
     }
 
     pub(crate) fn step(&mut self, data: &Matrix) -> Matrix {
-        self.z = &self.weights * data;
+        self.weights.mul_to(data, &mut self.z);
 
         self.z
             .column_iter_mut()
