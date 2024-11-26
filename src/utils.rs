@@ -10,13 +10,26 @@ pub fn shuffle_rows(m: &mut Matrix) {
     }
 }
 
+/// One of m's axes should be of length one
+/// eg. m is either of shape (n, 1) or (1, n)
 pub fn one_hot(m: &Matrix) -> Matrix {
-    let mut one_hot = Matrix::zeros(m.max() as usize + 1, m.ncols());
+    if m.ncols() == 1 {
+        let mut one_hot = Matrix::zeros(m.max() as usize + 1, m.nrows());
 
-    one_hot
-        .column_iter_mut()
-        .enumerate()
-        .for_each(|(i, mut col)| col[m[(0, i)] as usize] = 1.);
+        one_hot
+            .row_iter_mut()
+            .enumerate()
+            .for_each(|(i, mut row)| row[m[(i, 0)] as usize] = 1.);
 
-    one_hot
+        one_hot
+    } else {
+        let mut one_hot = Matrix::zeros(m.max() as usize + 1, m.ncols());
+
+        one_hot
+            .column_iter_mut()
+            .enumerate()
+            .for_each(|(i, mut col)| col[m[(0, i)] as usize] = 1.);
+
+        one_hot
+    }
 }

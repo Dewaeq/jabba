@@ -51,6 +51,7 @@ impl NN {
     ) -> f32 {
         let num_samples = x_train.ncols();
         let batch_size = self.options.batch_size;
+        let start = Instant::now();
 
         let mut total_loss = 0.;
         let mut learning_rate = self.options.learning_rate;
@@ -58,6 +59,7 @@ impl NN {
 
         for epoch in 0..epochs {
             let mut current_loss = 0.;
+
             for i in (0..num_samples).step_by(batch_size) {
                 let batch_x = x_train.columns_range(i..(i + batch_size).min(num_samples));
                 let batch_y = y_train.columns_range(i..(i + batch_size).min(num_samples));
@@ -70,19 +72,21 @@ impl NN {
             current_loss /= num_samples as f32;
             total_loss += current_loss;
 
-            if self.options.test_interval.is_some_and(|x| epoch % x == 0) {
-                print!("\x1B[2J\x1B[1;1H");
-                let accuracy = self.test(x_test, y_test);
-                println!("test accuracy:\t{accuracy}");
-            }
-
             if self.options.log_interval.is_some_and(|x| epoch % x == 0) {
-                let elapsed = start.elapsed().as_secs_f32();
-                println!("epochs/sec:\t{}", epoch as f32 / elapsed);
+                print!("\x1B[2J\x1B[1;1H");
                 println!("avg loss:\t{}", total_loss / epoch as f32);
                 println!("current loss:\t{current_loss}");
                 println!("epoch:\t\t{epoch}");
+                println!(
+                    "epochs/sec:\t{}",
+                    epoch as f32 / start.elapsed().as_secs_f32()
+                );
                 println!("learning rate:\t{learning_rate}");
+
+                if self.options.test {
+                    let accuracy = self.test(x_test, y_test);
+                    println!("test accuracy:\t{accuracy}");
+                }
             }
 
             learning_rate = self.update_learning_rate(learning_rate, epoch, current_loss);
@@ -116,7 +120,7 @@ impl NN {
 
 pub struct NNOptions {
     pub log_interval: Option<usize>,
-    pub test_interval: Option<usize>,
+    pub test: bool,
     pub batch_size: usize,
     pub learning_rate: f32,
     pub decay_rate: f32,
@@ -128,7 +132,7 @@ impl Default for NNOptions {
             batch_size: 1,
             learning_rate: 0.1,
             log_interval: None,
-            test_interval: None,
+            test: false,
             decay_rate: 0.,
         }
     }
