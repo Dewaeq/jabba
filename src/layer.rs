@@ -25,16 +25,19 @@ impl Layer {
     }
 
     pub(crate) fn step(&mut self, data: &Matrix) -> Matrix {
+        // TODO: find a nicer way to do this
+        if self.a.ncols() != data.ncols() {
+            let shape = (self.z.nrows(), data.ncols());
+            self.a = unsafe { empty_like(shape) };
+            self.z = unsafe { empty_like(shape) };
+        }
+
         self.weights.mul_to(data, &mut self.z);
 
         self.z
             .column_iter_mut()
             .for_each(|mut col| col += &self.bias);
-
-        // TODO: find a nicer way to do this
-        if self.a.ncols() != self.z.ncols() {
-            self.a = unsafe { empty_like(&self.z) };
-        }
+        assert!(self.z.ncols() == data.ncols());
 
         (self.activation.func)(&self.z, &mut self.a);
 
@@ -47,7 +50,7 @@ impl Layer {
         prev_a: &Matrix,
         learning_rate: f32,
     ) -> Matrix {
-        let mut buffer = unsafe { empty_like(&self.z) };
+        let mut buffer = unsafe { empty_like(self.z.shape()) };
         (self.activation.derv)(&self.z, &mut buffer);
 
         delta.component_mul_assign(&buffer);

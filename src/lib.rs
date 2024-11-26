@@ -1,4 +1,4 @@
-use nalgebra::DMatrix;
+use nalgebra::{DMatrix, Dyn};
 
 pub mod activation;
 pub mod nn;
@@ -9,7 +9,7 @@ mod layer;
 
 pub type Matrix = DMatrix<f32>;
 
-pub(crate) unsafe fn empty_like(m: &Matrix) -> Matrix {
-    let (nrows, ncols) = m.shape_generic();
-    DMatrix::uninit(nrows, ncols).assume_init()
+pub(crate) unsafe fn empty_like(shape: (usize, usize)) -> Matrix {
+    let (nrows, ncols) = shape;
+    DMatrix::uninit(Dyn(nrows), Dyn(ncols)).assume_init()
 }

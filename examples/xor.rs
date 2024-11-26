@@ -16,6 +16,7 @@ fn main() {
 
     let options = NNOptions {
         log_interval: Some(5000),
+        batch_size: 2,
         ..Default::default()
     };
 
