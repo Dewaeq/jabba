@@ -23,8 +23,8 @@ impl FromStr for ActivationType {
 }
 
 pub struct Activation {
-    pub(crate) func: fn(&Matrix) -> Matrix,
-    pub(crate) derv: fn(&Matrix) -> Matrix,
+    pub(crate) func: fn(&Matrix, &mut Matrix),
+    pub(crate) derv: fn(&Matrix, &mut Matrix),
     pub(crate) activation_type: ActivationType,
 }
 
@@ -32,8 +32,8 @@ impl Activation {
     #[allow(non_snake_case)]
     pub fn ReLu() -> Self {
         Activation {
-            func: |m| m.map(|x| x.max(0.)),
-            derv: |m| m.map(|x| if x > 0. { 1. } else { 0. }),
+            func: |m, buffer| apply(m, buffer, |x| x.max(0.)),
+            derv: |m, buffer| apply(m, buffer, |x| if x > 0. { 1. } else { 0. }),
             activation_type: ActivationType::ReLu,
         }
     }
@@ -41,20 +41,20 @@ impl Activation {
     #[allow(non_snake_case)]
     pub fn ReLu_leaky() -> Self {
         Activation {
-            func: |m| m.map(|x| if x > 0. { x } else { 0.01 * x }),
-            derv: |m| m.map(|x| if x > 0. { 1. } else { 0.01 }),
+            func: |m, buffer| apply(m, buffer, |x| if x > 0. { x } else { 0.01 * x }),
+            derv: |m, buffer| apply(m, buffer, |x| if x > 0. { 1. } else { 0.01 }),
             activation_type: ActivationType::ReLuLeaky,
         }
     }
 
     pub fn sigmoid() -> Self {
         Activation {
-            func: |m| m.map(sigmoid),
-            derv: |m| {
-                m.map(|x| {
+            func: |m, buffer| apply(m, buffer, sigmoid),
+            derv: |m, buffer| {
+                apply(m, buffer, |x| {
                     let s = sigmoid(x);
                     s * (1. - s)
-                })
+                });
             },
             activation_type: ActivationType::Sigmoid,
         }
@@ -63,4 +63,8 @@ impl Activation {
 
 fn sigmoid(x: f32) -> f32 {
     1. / (1. + (-x).exp())
+}
+
+fn apply(m: &Matrix, buffer: &mut Matrix, f: fn(f32) -> f32) {
+    buffer.iter_mut().zip(m).for_each(|(out, &x)| *out = f(x));
 }

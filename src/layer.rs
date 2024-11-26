@@ -1,7 +1,8 @@
+use nalgebra::DMatrix;
 use rand::thread_rng;
 use rand_distr::{Distribution, Normal, Uniform};
 
-use crate::{activation::Activation, Matrix};
+use crate::{activation::Activation, empty_like, Matrix};
 
 pub(crate) struct Layer {
     pub bias: Matrix,
@@ -18,17 +19,24 @@ impl Layer {
             bias: random_bias(num_neurons),
             weights: random_weights(num_neurons, num_inputs),
             activation,
-            a: Matrix::zeros(num_neurons, 0),
-            z: Matrix::zeros(num_neurons, 0),
+            a: Matrix::zeros(num_neurons, 1),
+            z: Matrix::zeros(num_neurons, 1),
         }
     }
 
     pub(crate) fn step(&mut self, data: &Matrix) -> Matrix {
         self.z = &self.weights * data;
+
         self.z
             .column_iter_mut()
             .for_each(|mut col| col += &self.bias);
-        self.a = (self.activation.func)(&self.z);
+
+        // TODO: find a nicer way to do this
+        if self.a.ncols() != self.z.ncols() {
+            self.a = unsafe { empty_like(&self.z) };
+        }
+
+        (self.activation.func)(&self.z, &mut self.a);
 
         self.a.clone()
     }
@@ -39,7 +47,10 @@ impl Layer {
         prev_a: &Matrix,
         learning_rate: f32,
     ) -> Matrix {
-        delta.component_mul_assign(&(self.activation.derv)(&self.z));
+        let mut buffer = unsafe { empty_like(&self.z) };
+        (self.activation.derv)(&self.z, &mut buffer);
+
+        delta.component_mul_assign(&buffer);
 
         let dw = learning_rate * &delta * prev_a.transpose();
         let db = learning_rate * delta.column_sum();
