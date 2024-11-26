@@ -1,5 +1,5 @@
 use rand::thread_rng;
-use rand_distr::{Distribution, Normal};
+use rand_distr::{Distribution, Normal, Uniform};
 
 use crate::{activation::Activation, Matrix};
 
@@ -53,19 +53,15 @@ impl Layer {
 }
 
 fn random_weights(num_neurons: usize, num_inputs: usize) -> Matrix {
-    let normal = Normal::new(0., (1. / (num_inputs as f32)).sqrt()).unwrap();
+    //let normal = Normal::new(0., (1. / (num_inputs as f32)).sqrt()).unwrap();
+    let distr = Uniform::new(-0.02, 0.02);
 
     let mut rng = thread_rng();
-    let weights = Matrix::from_fn(num_neurons, num_inputs, |_, _| normal.sample(&mut rng));
+    let weights = Matrix::from_fn(num_neurons, num_inputs, |_, _| distr.sample(&mut rng));
 
     weights
 }
 
 fn random_bias(num_neurons: usize) -> Matrix {
-    let normal = Normal::new(0., 1.).unwrap();
-
-    let mut rng = thread_rng();
-    let bias = Matrix::from_fn(num_neurons, 1, |_, _| normal.sample(&mut rng));
-
-    bias
+    Matrix::zeros(num_neurons, 1)
 }
