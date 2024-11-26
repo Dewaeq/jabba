@@ -15,7 +15,8 @@ fn main() {
     ];
 
     let options = NNOptions {
-        log_interval: Some(5000),
+        log_interval: Some(1000),
+        test_interval: Some(1000),
         ..Default::default()
     };
 

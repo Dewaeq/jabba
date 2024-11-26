@@ -368,6 +368,7 @@ dependencies = [
  "nalgebra",
  "rand",
  "rand_distr",
+ "rayon",
 ]
 
 [[package]]
@@ -484,6 +485,7 @@ dependencies = [
  "num-traits",
  "rand",
  "rand_distr",
+ "rayon",
  "simba",
  "typenum",
 ]

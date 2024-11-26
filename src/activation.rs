@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::str::FromStr;
 
 use crate::Matrix;
@@ -32,8 +33,8 @@ impl Activation {
     #[allow(non_snake_case)]
     pub fn ReLu() -> Self {
         Activation {
-            func: |m| m.map(|x| x.max(0.)),
-            derv: |m| m.map(|x| if x > 0. { 1. } else { 0. }),
+            func: |m| apply(m, |x| x.max(0.)),
+            derv: |m| apply(m, |x| if x > 0. { 1. } else { 0. }),
             activation_type: ActivationType::ReLu,
         }
     }
@@ -41,17 +42,17 @@ impl Activation {
     #[allow(non_snake_case)]
     pub fn ReLu_leaky() -> Self {
         Activation {
-            func: |m| m.map(|x| if x > 0. { x } else { 0.01 * x }),
-            derv: |m| m.map(|x| if x > 0. { 1. } else { 0.01 }),
+            func: |m| apply(m, |x| if x > 0. { x } else { 0.01 * x }),
+            derv: |m| apply(m, |x| if x > 0. { 1. } else { 0.01 }),
             activation_type: ActivationType::ReLuLeaky,
         }
     }
 
     pub fn sigmoid() -> Self {
         Activation {
-            func: |m| m.map(sigmoid),
+            func: |m| apply(m, sigmoid),
             derv: |m| {
-                m.map(|x| {
+                apply(m, |x| {
                     let s = sigmoid(x);
                     s * (1. - s)
                 })
@@ -63,4 +64,18 @@ impl Activation {
 
 fn sigmoid(x: f32) -> f32 {
     1. / (1. + (-x).exp())
+}
+
+fn apply(m: &Matrix, f: fn(f32) -> f32) -> Matrix {
+    //let (nrows, ncols) = m.shape_generic();
+    //let mut result = DMatrix::<MaybeUninit<f32>>::uninit(nrows, ncols);
+
+    //result.();
+
+    Matrix::from_vec(
+        m.nrows(),
+        m.ncols(),
+        m.as_slice().par_iter().map(|&x| f(x)).collect(),
+    )
+    //m.map(|x| f(x))
 }

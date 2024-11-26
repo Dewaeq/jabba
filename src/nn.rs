@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use crate::{activation::Activation, layer::Layer, Matrix};
 
 pub struct NN {
@@ -52,6 +54,7 @@ impl NN {
 
         let mut total_loss = 0.;
         let mut learning_rate = self.options.learning_rate;
+        let start = Instant::now();
 
         for epoch in 0..epochs {
             let mut current_loss = 0.;
@@ -74,6 +77,8 @@ impl NN {
             }
 
             if self.options.log_interval.is_some_and(|x| epoch % x == 0) {
+                let elapsed = start.elapsed().as_secs_f32();
+                println!("epochs/sec:\t{}", epoch as f32 / elapsed);
                 println!("avg loss:\t{}", total_loss / epoch as f32);
                 println!("current loss:\t{current_loss}");
                 println!("epoch:\t\t{epoch}");
