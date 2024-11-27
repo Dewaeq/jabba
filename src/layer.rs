@@ -1,6 +1,5 @@
-use nalgebra::DMatrix;
 use rand::thread_rng;
-use rand_distr::{Distribution, Normal, Uniform};
+use rand_distr::{Distribution, Uniform};
 
 use crate::{activation::Activation, empty_like, Matrix};
 
@@ -39,7 +38,7 @@ impl Layer {
             .for_each(|mut col| col += &self.bias);
         assert!(self.z.ncols() == data.ncols());
 
-        (self.activation.func)(&self.z, &mut self.a);
+        self.activation.func(&self.z, &mut self.a);
 
         self.a.clone()
     }
@@ -51,7 +50,7 @@ impl Layer {
         learning_rate: f32,
     ) -> Matrix {
         let mut buffer = unsafe { empty_like(self.z.shape()) };
-        (self.activation.derv)(&self.z, &mut buffer);
+        self.activation.derv(&self.z, &mut buffer);
 
         delta.component_mul_assign(&buffer);
 

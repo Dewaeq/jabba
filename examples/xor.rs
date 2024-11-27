@@ -16,7 +16,7 @@ fn main() {
 
     let options = NNOptions {
         log_interval: Some(5000),
-        batch_size: 2,
+        batch_size: 3,
         ..Default::default()
     };
 
@@ -26,7 +26,7 @@ fn main() {
         .add_layer(1, Activation::sigmoid())
         .build();
 
-    let loss = nn.train(&x_train, &y_train, &x_train, &y_train, 100_000);
+    let loss = nn.train(&x_train, &y_train, &x_train, &y_train, 400_000);
     let prediction = nn.feed_forward(&x_train);
 
     println!("loss: {loss}");
