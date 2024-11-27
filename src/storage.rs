@@ -54,6 +54,7 @@ fn nn_from_string(string: &str) -> NN {
                 activation,
                 a: Default::default(),
                 z: Default::default(),
+                vw: Default::default(),
             });
 
             assert!(lines.next().unwrap().contains("END:LAYER"));

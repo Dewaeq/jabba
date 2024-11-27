@@ -51,6 +51,9 @@ impl NN {
     ) -> f32 {
         let num_samples = x_train.ncols();
         let batch_size = self.options.batch_size;
+
+        assert!(num_samples % batch_size == 0);
+
         let start = Instant::now();
 
         let mut total_loss = 0.;
@@ -62,6 +65,7 @@ impl NN {
             for i in (0..num_samples).step_by(batch_size) {
                 let batch_x = x_train.columns_range(i..(i + batch_size).min(num_samples));
                 let batch_y = y_train.columns_range(i..(i + batch_size).min(num_samples));
+
                 let predicted = self.feed_forward(&batch_x.into());
 
                 self.back_propagate(&batch_x.into(), &batch_y.into(), &predicted, learning_rate);
@@ -165,8 +169,12 @@ impl NNBuilder {
             self.num_inputs
         };
 
-        self.layers
-            .push(Layer::new(num_inputs, num_neurons, activation));
+        self.layers.push(Layer::new(
+            num_inputs,
+            num_neurons,
+            activation,
+            self.options.batch_size,
+        ));
 
         self
     }

@@ -4,22 +4,29 @@ use rand_distr::{Distribution, Uniform};
 use crate::{activation::Activation, empty_like, Matrix};
 
 pub(crate) struct Layer {
-    pub bias: Matrix,
-    pub weights: Matrix,
-    pub activation: Activation,
+    pub(crate) bias: Matrix,
+    pub(crate) weights: Matrix,
+    pub(crate) activation: Activation,
 
-    pub a: Matrix,
-    pub z: Matrix,
+    pub(crate) a: Matrix,
+    pub(crate) z: Matrix,
+    pub(crate) vw: Matrix,
 }
 
 impl Layer {
-    pub(crate) fn new(num_inputs: usize, num_neurons: usize, activation: Activation) -> Self {
+    pub(crate) fn new(
+        num_inputs: usize,
+        num_neurons: usize,
+        activation: Activation,
+        batch_size: usize,
+    ) -> Self {
         Layer {
             bias: random_bias(num_neurons),
             weights: random_weights(num_neurons, num_inputs),
             activation,
-            a: Matrix::zeros(num_neurons, 1),
-            z: Matrix::zeros(num_neurons, 1),
+            a: Matrix::zeros(num_neurons, batch_size),
+            z: Matrix::zeros(num_neurons, batch_size),
+            vw: Matrix::zeros(num_neurons, num_inputs),
         }
     }
 
@@ -36,7 +43,6 @@ impl Layer {
         self.z
             .column_iter_mut()
             .for_each(|mut col| col += &self.bias);
-        assert!(self.z.ncols() == data.ncols());
 
         self.activation.func(&self.z, &mut self.a);
 
@@ -54,11 +60,15 @@ impl Layer {
 
         delta.component_mul_assign(&buffer);
 
-        let dw = learning_rate * &delta * prev_a.transpose();
-        let db = learning_rate * delta.column_sum();
+        let dw = &delta * prev_a.transpose();
+        let db = delta.column_sum();
 
-        self.weights -= dw;
-        self.bias -= db;
+        // Momentum
+        let beta = 0.9;
+        self.vw = beta * &self.vw + learning_rate * &dw;
+
+        self.weights -= &self.vw;
+        self.bias -= learning_rate * db;
 
         let next_delta = self.weights.transpose() * delta;
         next_delta

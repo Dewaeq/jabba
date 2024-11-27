@@ -22,9 +22,9 @@ fn main() {
     let options = NNOptions {
         log_interval: Some(1),
         test: true,
-        batch_size: 64,
+        batch_size: 120,
         learning_rate: 0.0035,
-        decay_rate: 0.000006,
+        decay_rate: 0.00006,
         ..Default::default()
     };
 
