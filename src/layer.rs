@@ -1,7 +1,8 @@
+use nalgebra::Dyn;
 use rand::thread_rng;
 use rand_distr::{Distribution, Uniform};
 
-use crate::{activation::Activation, empty_like, Matrix};
+use crate::{activation::Activation, empty_like, optimizers::Optimizer, Matrix};
 
 pub(crate) struct Layer {
     pub(crate) bias: Matrix,
@@ -10,7 +11,9 @@ pub(crate) struct Layer {
 
     pub(crate) a: Matrix,
     pub(crate) z: Matrix,
-    pub(crate) vw: Matrix,
+
+    weights_index: usize,
+    bias_index: usize,
 }
 
 impl Layer {
@@ -26,8 +29,14 @@ impl Layer {
             activation,
             a: Matrix::zeros(num_neurons, batch_size),
             z: Matrix::zeros(num_neurons, batch_size),
-            vw: Matrix::zeros(num_neurons, num_inputs),
+            weights_index: 0,
+            bias_index: 0,
         }
+    }
+
+    pub(crate) fn init(&mut self, optimizer: &mut Box<dyn Optimizer>) {
+        self.weights_index = optimizer.add_variables(self.weights.shape());
+        self.bias_index = optimizer.add_variables(self.bias.shape());
     }
 
     pub(crate) fn step(&mut self, data: &Matrix) -> Matrix {
@@ -54,6 +63,8 @@ impl Layer {
         mut delta: Matrix,
         prev_a: &Matrix,
         learning_rate: f32,
+        optimizer: &mut Box<dyn Optimizer>,
+        iteration: usize,
     ) -> Matrix {
         let mut buffer = unsafe { empty_like(self.z.shape()) };
         self.activation.derv(&self.z, &mut buffer);
@@ -61,14 +72,24 @@ impl Layer {
         delta.component_mul_assign(&buffer);
 
         let dw = &delta * prev_a.transpose();
-        let db = delta.column_sum();
+        let db = &delta
+            .column_sum()
+            .reshape_generic(Dyn(delta.nrows()), Dyn(1));
 
-        // Momentum
-        let beta = 0.9;
-        self.vw = beta * &self.vw + learning_rate * &dw;
-
-        self.weights -= &self.vw;
-        self.bias -= learning_rate * db;
+        optimizer.step(
+            learning_rate,
+            &dw,
+            iteration,
+            self.weights_index,
+            &mut self.weights,
+        );
+        optimizer.step(
+            learning_rate,
+            &db,
+            iteration,
+            self.bias_index,
+            &mut self.bias,
+        );
 
         let next_delta = self.weights.transpose() * delta;
         next_delta

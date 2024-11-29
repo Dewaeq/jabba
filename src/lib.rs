@@ -2,6 +2,7 @@ use nalgebra::{DMatrix, Dyn};
 
 pub mod activation;
 pub mod nn;
+pub mod optimizers;
 pub mod storage;
 pub mod utils;
 

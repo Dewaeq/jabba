@@ -1,6 +1,7 @@
 use jabba::{
     activation::Activation,
     nn::{NNBuilder, NNOptions},
+    optimizers::{adam_optimizer::AdamOptimizer, Optimizer},
 };
 use nalgebra::dmatrix;
 
@@ -17,6 +18,7 @@ fn main() {
     let options = NNOptions {
         log_interval: Some(5000),
         batch_size: 2,
+        learning_rate: 0.01,
         ..Default::default()
     };
 
@@ -24,6 +26,7 @@ fn main() {
         .options(options)
         .add_layer(2, Activation::sigmoid())
         .add_layer(1, Activation::sigmoid())
+        .optimizer(AdamOptimizer::boxed())
         .build();
 
     let loss = nn.train(&x_train, &y_train, &x_train, &y_train, 40_000);

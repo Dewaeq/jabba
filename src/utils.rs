@@ -33,3 +33,7 @@ pub fn one_hot(m: &Matrix) -> Matrix {
         one_hot
     }
 }
+
+pub fn pow(m: &Matrix, p: f32) -> Matrix {
+    m.map(|x| x.powf(p))
+}

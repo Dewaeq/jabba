@@ -1,10 +1,11 @@
 use std::time::Instant;
 
-use crate::{activation::Activation, layer::Layer, Matrix};
+use crate::{activation::Activation, layer::Layer, optimizers::Optimizer, Matrix};
 
 pub struct NN {
     pub(crate) layers: Vec<Layer>,
     pub(crate) options: NNOptions,
+    pub(crate) optimizer: Box<dyn Optimizer>,
 }
 
 impl NN {
@@ -23,6 +24,7 @@ impl NN {
         label: &Matrix,
         predicted: &Matrix,
         learning_rate: f32,
+        iteration: usize,
     ) {
         let cost = predicted - label;
         let mut delta = cost;
@@ -37,7 +39,9 @@ impl NN {
                 (&mut right[0], &left.last().unwrap().a)
             };
 
-            delta = layer.back_propagate(delta, prev_a, learning_rate);
+            let optimizer = &mut self.optimizer;
+
+            delta = layer.back_propagate(delta, prev_a, learning_rate, optimizer, iteration);
         }
     }
 
@@ -57,7 +61,6 @@ impl NN {
         let start = Instant::now();
 
         let mut total_loss = 0.;
-        let mut learning_rate = self.options.learning_rate;
 
         for epoch in 0..epochs {
             let mut current_loss = 0.;
@@ -68,7 +71,13 @@ impl NN {
 
                 let predicted = self.feed_forward(&batch_x.into());
 
-                self.back_propagate(&batch_x.into(), &batch_y.into(), &predicted, learning_rate);
+                self.back_propagate(
+                    &batch_x.into(),
+                    &batch_y.into(),
+                    &predicted,
+                    self.options.learning_rate,
+                    i,
+                );
                 current_loss += (predicted - batch_y).norm_squared();
             }
 
@@ -85,15 +94,12 @@ impl NN {
                     "epochs/sec:\t{}",
                     epoch as f32 / start.elapsed().as_secs_f32()
                 );
-                println!("learning rate:\t{learning_rate}");
 
                 if self.options.test {
                     let accuracy = self.test(x_test, y_test);
                     println!("test accuracy:\t{accuracy}");
                 }
             }
-
-            learning_rate = self.update_learning_rate(learning_rate, epoch, current_loss);
         }
 
         total_loss / epochs as f32
@@ -115,10 +121,6 @@ impl NN {
         }
 
         num_correct as f32 / x_test.ncols() as f32
-    }
-
-    fn update_learning_rate(&self, learning_rate: f32, epoch: usize, loss: f32) -> f32 {
-        learning_rate / (1. + self.options.decay_rate * epoch as f32)
     }
 }
 
@@ -147,6 +149,7 @@ pub struct NNBuilder {
     layers: Vec<Layer>,
     num_inputs: usize,
     options: NNOptions,
+    optimizer: Box<dyn Optimizer>,
 }
 
 impl NNBuilder {
@@ -159,6 +162,11 @@ impl NNBuilder {
 
     pub fn options(mut self, options: NNOptions) -> Self {
         self.options = options;
+        self
+    }
+
+    pub fn optimizer(mut self, optimizer: Box<dyn Optimizer>) -> Self {
+        self.optimizer = optimizer;
         self
     }
 
@@ -179,10 +187,15 @@ impl NNBuilder {
         self
     }
 
-    pub fn build(self) -> NN {
+    pub fn build(mut self) -> NN {
+        for layer in &mut self.layers {
+            layer.init(&mut self.optimizer);
+        }
+
         NN {
             layers: self.layers,
             options: self.options,
+            optimizer: self.optimizer,
         }
     }
 }

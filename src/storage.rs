@@ -2,6 +2,7 @@ use crate::{
     activation::{Activation, ActivationType},
     layer::Layer,
     nn::NN,
+    optimizers::{adam_optimizer::AdamOptimizer, default_optimizer::DefaultOptimizer, Optimizer},
     Matrix,
 };
 use std::{fs, path::Path, str::FromStr};
@@ -30,12 +31,15 @@ fn nn_to_string(nn: &NN) -> String {
         contents.push_str("END:LAYER\n");
     }
 
+    contents.push_str(&format!("OPTIMIZER:{}", "adam"));
+
     contents
 }
 
 fn nn_from_string(string: &str) -> NN {
     let mut lines = string.lines();
     let mut layers = vec![];
+    let mut optimizer: Box<dyn Optimizer> = DefaultOptimizer::boxed();
 
     while let Some(line) = lines.next() {
         if line.contains("BEGIN:LAYER") {
@@ -48,21 +52,28 @@ fn nn_from_string(string: &str) -> NN {
                 ActivationType::Sigmoid => Activation::sigmoid(),
             };
 
-            layers.push(Layer {
-                bias,
-                weights,
-                activation,
-                a: Default::default(),
-                z: Default::default(),
-                vw: Default::default(),
-            });
+            todo!("fix this");
+            //layers.push(Layer {
+            //bias,
+            //weights,
+            //activation,
+            //a: Default::default(),
+            //z: Default::default(),
+            //vw: Default::default(),
+            //});
 
             assert!(lines.next().unwrap().contains("END:LAYER"));
+        } else if line.contains("OPTIMIZER:") {
+            optimizer = match &line[10..] {
+                "ADAM" => AdamOptimizer::boxed(),
+                _ => DefaultOptimizer::boxed(),
+            };
         }
     }
 
     NN {
         layers,
+        optimizer,
         options: Default::default(),
     }
 }
