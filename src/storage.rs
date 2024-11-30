@@ -52,15 +52,11 @@ fn nn_from_string(string: &str) -> NN {
                 ActivationType::Sigmoid => Activation::sigmoid(),
             };
 
-            todo!("fix this");
-            //layers.push(Layer {
-            //bias,
-            //weights,
-            //activation,
-            //a: Default::default(),
-            //z: Default::default(),
-            //vw: Default::default(),
-            //});
+            let mut layer = Layer::new(0, 0, activation, 1);
+            layer.weights = weights;
+            layer.bias = bias;
+
+            layers.push(layer);
 
             assert!(lines.next().unwrap().contains("END:LAYER"));
         } else if line.contains("OPTIMIZER:") {
