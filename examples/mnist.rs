@@ -25,7 +25,6 @@ fn main() {
         test: true,
         batch_size: 120,
         learning_rate: 0.001,
-        decay_rate: 0.00006,
         stop_condition: StopCondition::TestAccuracy(0.98),
         ..Default::default()
     };

@@ -178,7 +178,6 @@ pub struct NNOptions {
     pub test: bool,
     pub batch_size: usize,
     pub learning_rate: f32,
-    pub decay_rate: f32,
     pub stop_condition: StopCondition,
 }
 
@@ -189,7 +188,6 @@ impl Default for NNOptions {
             learning_rate: 0.1,
             log_interval: None,
             test: false,
-            decay_rate: 0.,
             stop_condition: StopCondition::Epoch(200),
         }
     }
