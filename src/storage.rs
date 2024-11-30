@@ -71,11 +71,7 @@ fn nn_from_string(string: &str) -> NN {
         }
     }
 
-    NN {
-        layers,
-        optimizer,
-        options: Default::default(),
-    }
+    NN::new(layers, Default::default(), optimizer)
 }
 
 fn matrix_to_string(m: &Matrix) -> String {

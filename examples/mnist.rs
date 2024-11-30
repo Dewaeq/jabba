@@ -2,7 +2,7 @@ use std::fs;
 
 use jabba::{
     activation::Activation,
-    nn::{NNBuilder, NNOptions},
+    nn::{NNBuilder, NNOptions, StopCondition},
     optimizers::{adam_optimizer::AdamOptimizer, Optimizer},
     storage,
     utils::one_hot,
@@ -26,6 +26,7 @@ fn main() {
         batch_size: 120,
         learning_rate: 0.001,
         decay_rate: 0.00006,
+        stop_condition: StopCondition::TestAccuracy(0.98),
         ..Default::default()
     };
 
@@ -37,7 +38,7 @@ fn main() {
         .optimizer(AdamOptimizer::boxed())
         .build();
 
-    nn.train(&x_train, &y_train, &x_test, &y_test, 600);
+    nn.train(&x_train, &y_train, &x_test, &y_test);
 
     storage::write_to("examples/mnist-nn.txt", &nn).unwrap()
 }
