@@ -13,15 +13,13 @@ pub trait Optimizer {
         Box::new(Self::default())
     }
 
-    fn add_variables(&mut self, shape: (usize, usize)) -> usize {
-        0
-    }
+    fn add_variables(&mut self, shape: (usize, usize)) -> usize;
 
     fn step(
         &mut self,
         learning_rate: f32,
         gradient: &Matrix,
-        iteration: usize,
+        step: usize,
         index: usize,
         variables: &mut Matrix,
     );

@@ -64,7 +64,7 @@ impl Layer {
         prev_a: &Matrix,
         learning_rate: f32,
         optimizer: &mut Box<dyn Optimizer>,
-        iteration: usize,
+        step: usize,
     ) -> Matrix {
         let mut buffer = unsafe { empty_like(self.z.shape()) };
         self.activation.derv(&self.z, &mut buffer);
@@ -79,17 +79,11 @@ impl Layer {
         optimizer.step(
             learning_rate,
             &dw,
-            iteration,
+            step,
             self.weights_index,
             &mut self.weights,
         );
-        optimizer.step(
-            learning_rate,
-            &db,
-            iteration,
-            self.bias_index,
-            &mut self.bias,
-        );
+        optimizer.step(learning_rate, &db, step, self.bias_index, &mut self.bias);
 
         let next_delta = self.weights.transpose() * delta;
         next_delta

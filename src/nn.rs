@@ -24,7 +24,7 @@ impl NN {
         label: &Matrix,
         predicted: &Matrix,
         learning_rate: f32,
-        iteration: usize,
+        step: usize,
     ) {
         let cost = predicted - label;
         let mut delta = cost;
@@ -41,7 +41,7 @@ impl NN {
 
             let optimizer = &mut self.optimizer;
 
-            delta = layer.back_propagate(delta, prev_a, learning_rate, optimizer, iteration);
+            delta = layer.back_propagate(delta, prev_a, learning_rate, optimizer, step);
         }
     }
 
@@ -61,6 +61,7 @@ impl NN {
         let start = Instant::now();
 
         let mut total_loss = 0.;
+        let mut step = 0;
 
         for epoch in 0..epochs {
             let mut current_loss = 0.;
@@ -76,9 +77,11 @@ impl NN {
                     &batch_y.into(),
                     &predicted,
                     self.options.learning_rate,
-                    i,
+                    step,
                 );
+
                 current_loss += (predicted - batch_y).norm_squared();
+                step += 1;
             }
 
             current_loss /= num_samples as f32;

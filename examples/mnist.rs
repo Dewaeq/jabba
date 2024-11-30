@@ -31,9 +31,9 @@ fn main() {
 
     let mut nn = NNBuilder::new(784)
         .options(options)
-        .add_layer(200, Activation::sigmoid())
-        .add_layer(200, Activation::sigmoid())
-        .add_layer(10, Activation::sigmoid())
+        .add_layer(200, Activation::ReLu_leaky())
+        .add_layer(200, Activation::ReLu_leaky())
+        .add_layer(10, Activation::ReLu_leaky())
         .optimizer(AdamOptimizer::boxed())
         .build();
 

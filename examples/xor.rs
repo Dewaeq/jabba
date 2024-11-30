@@ -18,7 +18,7 @@ fn main() {
     let options = NNOptions {
         log_interval: Some(5000),
         batch_size: 2,
-        learning_rate: 0.01,
+        learning_rate: 0.001,
         ..Default::default()
     };
 

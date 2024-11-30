@@ -1,6 +1,6 @@
 use crate::empty_like;
-use crate::utils::{pow_to, sqrt, sqrt_to};
-use crate::{utils::pow, Matrix};
+use crate::utils::{pow_to, sqrt_to};
+use crate::Matrix;
 
 use crate::optimizers::Optimizer;
 
@@ -22,7 +22,7 @@ impl Optimizer for AdamOptimizer {
         &mut self,
         learning_rate: f32,
         gradient: &Matrix,
-        iteration: usize,
+        step: usize,
         index: usize,
         variables: &mut Matrix,
     ) {
@@ -30,7 +30,7 @@ impl Optimizer for AdamOptimizer {
         let beta_2 = 0.999f32;
         let epsilon = 1e-7f32;
 
-        let step = (iteration + 1) as i32;
+        let step = (step + 1) as i32; // step starts at zero
         let beta_1_power = beta_1.powi(step);
         let beta_2_power = beta_2.powi(step);
 
