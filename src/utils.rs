@@ -34,6 +34,24 @@ pub fn one_hot(m: &Matrix) -> Matrix {
     }
 }
 
-pub fn pow(m: &Matrix, p: f32) -> Matrix {
-    m.map(|x| x.powf(p))
+pub(crate) fn pow(m: &Matrix, p: i32) -> Matrix {
+    m.map(|x| x.powi(p))
+}
+
+pub(crate) fn pow_to(m: &Matrix, p: i32, buffer: &mut Matrix) {
+    buffer
+        .as_mut_slice()
+        .iter_mut()
+        .zip(m)
+        .for_each(|(x, y)| *x = y.powi(p));
+}
+
+pub(crate) fn sqrt(m: &Matrix) -> Matrix {
+    m.map(|x| x.sqrt())
+}
+
+pub(crate) fn sqrt_to(m: &Matrix, buffer: &mut Matrix) {
+    buffer.as_mut_slice().iter_mut().zip(m).for_each(|(x, y)| {
+        *x = y.sqrt();
+    });
 }

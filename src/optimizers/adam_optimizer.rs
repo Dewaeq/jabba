@@ -1,3 +1,5 @@
+use crate::empty_like;
+use crate::utils::{pow_to, sqrt, sqrt_to};
 use crate::{utils::pow, Matrix};
 
 use crate::optimizers::Optimizer;
@@ -37,9 +39,23 @@ impl Optimizer for AdamOptimizer {
         let m = &mut self.momentum[index];
         let v = &mut self.velocity[index];
 
-        *m += (gradient - &*m) * (1. - beta_1);
-        *v += (pow(&gradient, 2.) - &*v) * (1. - beta_2);
+        // use buffer to reduce allocations
+        let mut buffer = unsafe { empty_like(gradient.shape()) };
 
-        *variables -= (&*m * alpha).component_div(&pow(&v, 0.5).add_scalar(epsilon));
+        // calcutate new momentum
+        gradient.sub_to(&*m, &mut buffer);
+        buffer *= 1. - beta_1;
+        *m += &buffer;
+
+        // calculate new velocity
+        pow_to(&gradient, 2, &mut buffer);
+        buffer -= &*v;
+        buffer *= 1. - beta_2;
+        *v += &buffer;
+
+        sqrt_to(&v, &mut buffer);
+        buffer.add_scalar_mut(epsilon);
+
+        *variables -= alpha * m.component_div(&buffer);
     }
 }
