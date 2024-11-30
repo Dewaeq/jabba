@@ -29,9 +29,8 @@ fn main() {
         .optimizer(AdamOptimizer::boxed())
         .build();
 
-    let loss = nn.train(&x_train, &y_train, &x_train, &y_train, 40_000);
+    nn.train(&x_train, &y_train, &x_train, &y_train, 400_000);
     let prediction = nn.feed_forward(&x_train);
 
-    println!("loss: {loss}");
     println!("{x_train} {prediction}");
 }

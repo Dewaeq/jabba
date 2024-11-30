@@ -52,7 +52,7 @@ impl NN {
         x_test: &Matrix,
         y_test: &Matrix,
         epochs: usize,
-    ) -> f32 {
+    ) {
         let num_samples = x_train.ncols();
         let batch_size = self.options.batch_size;
 
@@ -101,8 +101,6 @@ impl NN {
                 }
             }
         }
-
-        total_loss / epochs as f32
     }
 
     fn test(&mut self, x_test: &Matrix, y_test: &Matrix) -> f32 {
