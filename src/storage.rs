@@ -1,5 +1,5 @@
 use crate::{
-    activation::{Activation, ActivationType},
+    activation::ActivationType,
     layer::Layer,
     nn::NN,
     optimizers::{adam_optimizer::AdamOptimizer, default_optimizer::DefaultOptimizer, Optimizer},
@@ -46,13 +46,8 @@ fn nn_from_string(string: &str) -> NN {
             let bias = matrix_from_string(lines.next().unwrap());
             let weights = matrix_from_string(lines.next().unwrap());
             let activation_type = ActivationType::from_str(lines.next().unwrap());
-            let activation = match activation_type.unwrap() {
-                ActivationType::ReLu => Activation::ReLu(),
-                ActivationType::ReLuLeaky => Activation::ReLu_leaky(),
-                ActivationType::Sigmoid => Activation::sigmoid(),
-            };
 
-            let mut layer = Layer::new(0, 0, activation, 1);
+            let mut layer = Layer::new(0, 0, activation_type.unwrap().activation(), 1);
             layer.weights = weights;
             layer.bias = bias;
 
@@ -101,7 +96,7 @@ fn matrix_from_string(s: &str) -> Matrix {
 #[cfg(test)]
 mod tests {
     use crate::{
-        activation::Activation,
+        activation::ActivationType,
         nn::NNBuilder,
         storage::{nn_from_string, nn_to_string},
     };
@@ -109,8 +104,8 @@ mod tests {
     #[test]
     fn test_nn_parser() {
         let nn = NNBuilder::new(2)
-            .add_layer(2, Activation::sigmoid())
-            .add_layer(1, Activation::sigmoid())
+            .add_layer(2, ActivationType::Sigmoid)
+            .add_layer(1, ActivationType::Sigmoid)
             .build();
         let parsed = nn_from_string(&nn_to_string(&nn));
 

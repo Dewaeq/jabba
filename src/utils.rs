@@ -34,6 +34,7 @@ pub fn one_hot(m: &Matrix) -> Matrix {
     }
 }
 
+#[allow(unused)]
 pub(crate) fn pow(m: &Matrix, p: i32) -> Matrix {
     m.map(|x| x.powi(p))
 }
@@ -46,6 +47,7 @@ pub(crate) fn pow_to(m: &Matrix, p: i32, buffer: &mut Matrix) {
         .for_each(|(x, y)| *x = y.powi(p));
 }
 
+#[allow(unused)]
 pub(crate) fn sqrt(m: &Matrix) -> Matrix {
     m.map(|x| x.sqrt())
 }

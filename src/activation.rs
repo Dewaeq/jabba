@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::Matrix;
 
 #[derive(Debug)]
-pub(crate) enum ActivationType {
+pub enum ActivationType {
     ReLu,
     ReLuLeaky,
     Sigmoid,
@@ -22,7 +22,17 @@ impl FromStr for ActivationType {
     }
 }
 
-pub struct Activation {
+impl ActivationType {
+    pub(crate) fn activation(self) -> Activation {
+        match self {
+            Self::ReLu => Activation::ReLu(),
+            Self::ReLuLeaky => Activation::ReLu_leaky(),
+            Self::Sigmoid => Activation::sigmoid(),
+        }
+    }
+}
+
+pub(crate) struct Activation {
     pub(crate) activation_type: ActivationType,
 
     f: fn(f32) -> f32,

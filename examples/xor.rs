@@ -1,7 +1,7 @@
 use jabba::{
-    activation::Activation,
+    activation::ActivationType,
     nn::{NNBuilder, NNOptions, StopCondition},
-    optimizers::{adam_optimizer::AdamOptimizer, Optimizer},
+    optimizers::OptimizerType,
 };
 use nalgebra::dmatrix;
 
@@ -27,9 +27,9 @@ fn main() {
 
     let mut nn = NNBuilder::new(2)
         .options(options)
-        .add_layer(2, Activation::sigmoid())
-        .add_layer(2, Activation::sigmoid())
-        .optimizer(AdamOptimizer::boxed())
+        .add_layer(2, ActivationType::Sigmoid)
+        .add_layer(2, ActivationType::Sigmoid)
+        .optimizer(OptimizerType::Adam)
         .build();
 
     nn.train(&x_train, &y_train, &x_train, &y_train);

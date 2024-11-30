@@ -1,9 +1,26 @@
+use adam_optimizer::AdamOptimizer;
 use default_optimizer::DefaultOptimizer;
 
 use crate::Matrix;
 
 pub mod adam_optimizer;
 pub mod default_optimizer;
+
+#[derive(Default)]
+pub enum OptimizerType {
+    Adam,
+    #[default]
+    Default,
+}
+
+impl OptimizerType {
+    pub fn optimizer(&self) -> Box<dyn Optimizer> {
+        match self {
+            Self::Adam => AdamOptimizer::boxed(),
+            Self::Default => DefaultOptimizer::boxed(),
+        }
+    }
+}
 
 pub trait Optimizer {
     fn boxed() -> Box<Self>

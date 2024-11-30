@@ -1,6 +1,12 @@
 use std::time::{Duration, Instant};
 
-use crate::{activation::Activation, layer::Layer, optimizers::Optimizer, Matrix};
+use crate::{
+    activation::ActivationType,
+    layer::Layer,
+    optimizers::{Optimizer, OptimizerType},
+    utils::pow,
+    Matrix,
+};
 
 pub struct NN {
     pub(crate) layers: Vec<Layer>,
@@ -194,7 +200,7 @@ pub struct NNBuilder {
     layers: Vec<Layer>,
     num_inputs: usize,
     options: NNOptions,
-    optimizer: Box<dyn Optimizer>,
+    optimizer_type: OptimizerType,
 }
 
 impl NNBuilder {
@@ -210,12 +216,12 @@ impl NNBuilder {
         self
     }
 
-    pub fn optimizer(mut self, optimizer: Box<dyn Optimizer>) -> Self {
-        self.optimizer = optimizer;
+    pub fn optimizer(mut self, optimizer_type: OptimizerType) -> Self {
+        self.optimizer_type = optimizer_type;
         self
     }
 
-    pub fn add_layer(mut self, num_neurons: usize, activation: Activation) -> Self {
+    pub fn add_layer(mut self, num_neurons: usize, activation_type: ActivationType) -> Self {
         let num_inputs = if let Some(layer) = self.layers.last() {
             layer.bias.nrows()
         } else {
@@ -225,7 +231,7 @@ impl NNBuilder {
         self.layers.push(Layer::new(
             num_inputs,
             num_neurons,
-            activation,
+            activation_type.activation(),
             self.options.batch_size,
         ));
 
@@ -233,10 +239,12 @@ impl NNBuilder {
     }
 
     pub fn build(mut self) -> NN {
+        let mut optimizer = self.optimizer_type.optimizer();
+
         for layer in &mut self.layers {
-            layer.init(&mut self.optimizer);
+            layer.init(&mut optimizer);
         }
 
-        NN::new(self.layers, self.options, self.optimizer)
+        NN::new(self.layers, self.options, optimizer)
     }
 }

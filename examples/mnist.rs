@@ -1,9 +1,9 @@
 use std::fs;
 
 use jabba::{
-    activation::Activation,
+    activation::ActivationType,
     nn::{NNBuilder, NNOptions, StopCondition},
-    optimizers::{adam_optimizer::AdamOptimizer, Optimizer},
+    optimizers::OptimizerType,
     storage,
     utils::one_hot,
     Matrix,
@@ -32,10 +32,10 @@ fn main() {
 
     let mut nn = NNBuilder::new(784)
         .options(options)
-        .add_layer(200, Activation::ReLu_leaky())
-        .add_layer(200, Activation::ReLu_leaky())
-        .add_layer(10, Activation::ReLu_leaky())
-        .optimizer(AdamOptimizer::boxed())
+        .add_layer(200, ActivationType::ReLuLeaky)
+        .add_layer(200, ActivationType::ReLuLeaky)
+        .add_layer(10, ActivationType::ReLuLeaky)
+        .optimizer(OptimizerType::Adam)
         .build();
 
     nn.train(&x_train, &y_train, &x_test, &y_test);
