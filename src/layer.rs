@@ -42,7 +42,7 @@ impl Layer {
     pub(crate) fn step(&mut self, data: &Matrix) -> Matrix {
         // TODO: find a nicer way to do this
         if self.a.ncols() != data.ncols() {
-            let shape = (self.z.nrows(), data.ncols());
+            let shape = (self.bias.nrows(), data.ncols());
             self.a = unsafe { empty_like(shape) };
             self.z = unsafe { empty_like(shape) };
         }

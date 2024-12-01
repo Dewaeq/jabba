@@ -4,7 +4,6 @@ use crate::{
     activation::ActivationType,
     layer::Layer,
     optimizers::{Optimizer, OptimizerType},
-    utils::pow,
     Matrix,
 };
 

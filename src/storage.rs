@@ -47,7 +47,12 @@ fn nn_from_string(string: &str) -> NN {
             let weights = matrix_from_string(lines.next().unwrap());
             let activation_type = ActivationType::from_str(lines.next().unwrap());
 
-            let mut layer = Layer::new(0, 0, activation_type.unwrap().activation(), 1);
+            let mut layer = Layer::new(
+                weights.ncols(),
+                weights.nrows(),
+                activation_type.unwrap().activation(),
+                1,
+            );
             layer.weights = weights;
             layer.bias = bias;
 
