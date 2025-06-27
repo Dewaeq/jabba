@@ -68,14 +68,24 @@ impl NN {
     pub fn train(&mut self, x_train: &Matrix, y_train: &Matrix, x_test: &Matrix, y_test: &Matrix) {
         let num_samples = x_train.ncols();
         let batch_size = self.options.batch_size;
+        let mut learning_rate = self.options.learning_rate;
 
         assert!(num_samples % batch_size == 0);
 
         let start = Instant::now();
         let mut step = 0;
+        let mut best_loss = f32::MAX;
+        let mut epochs_waited = 0;
 
         for epoch in 0.. {
             let mut current_loss = 0.;
+
+            if let Some(warmup_time) = self.options.warmup_time {
+                if epoch < warmup_time {
+                    learning_rate =
+                        self.options.learning_rate * (epoch + 1) as f32 / warmup_time as f32;
+                }
+            }
 
             for i in (0..num_samples).step_by(batch_size) {
                 let batch_x = x_train.columns_range(i..(i + batch_size).min(num_samples));
@@ -87,39 +97,40 @@ impl NN {
                     &batch_x.into(),
                     &batch_y.into(),
                     &predicted,
-                    self.options.learning_rate,
+                    learning_rate,
                     step,
                 );
 
-                if self.options.log_batches {
-                    print!("\x1B[2J\x1B[1;1H");
-                    println!("epoch:\t\t{epoch}");
-                    println!(
-                        "epoch progress: {}%",
-                        (i as f32) / (num_samples as f32) * 100.
-                    );
-
-                    println!("current loss:\t{}", current_loss / i as f32);
-                    println!(
-                        "epochs/sec:\t{}",
-                        epoch as f32 / start.elapsed().as_secs_f32()
-                    );
-
-                    if self.options.test {
-                        println!("test accuracy:\t{}", self.test_accuracy);
-                    }
-                }
-
                 current_loss += (predicted - batch_y).norm_squared();
                 step += 1;
+
+                if self.options.log_batches {
+                    self.log(
+                        epoch,
+                        i,
+                        num_samples,
+                        start,
+                        current_loss / i as f32,
+                        learning_rate,
+                    );
+                }
             }
 
             current_loss /= num_samples as f32;
 
-            if self.options.log_interval.is_some_and(|x| epoch % x == 0) {
-                self.log(epoch, start, current_loss, x_test, y_test);
+            if self.options.test {
+                self.test_accuracy = self.test(x_test, y_test);
             }
-
+            if self.options.log_interval.is_some_and(|x| epoch % x == 0) {
+                self.log(
+                    epoch,
+                    num_samples,
+                    num_samples,
+                    start,
+                    current_loss,
+                    learning_rate,
+                );
+            }
             if self.options.stop_condition.must_stop(
                 current_loss,
                 epoch,
@@ -128,28 +139,44 @@ impl NN {
             ) {
                 break;
             }
+            if let Some(patience) = self.options.patience {
+                if current_loss < best_loss {
+                    best_loss = current_loss;
+                    epochs_waited = 0;
+                } else {
+                    epochs_waited += 1;
+                }
+                if epochs_waited >= patience {
+                    learning_rate *= self.options.learning_rate_factor;
+                }
+            }
         }
     }
 
     fn log(
         &mut self,
         epoch: usize,
+        iteration: usize,
+        num_samples: usize,
         start: Instant,
         current_loss: f32,
-        x_test: &Matrix,
-        y_test: &Matrix,
+        learning_rate: f32,
     ) {
         print!("\x1B[2J\x1B[1;1H");
 
-        println!("current loss:\t{current_loss}");
         println!("epoch:\t\t{epoch}");
+        println!(
+            "epoch progress: {}%",
+            (iteration as f32) / (num_samples as f32) * 100.
+        );
+        println!("current loss:\t{current_loss}");
+        println!("learning rate:\t{learning_rate}");
         println!(
             "epochs/sec:\t{}",
             epoch as f32 / start.elapsed().as_secs_f32()
         );
 
         if self.options.test {
-            self.test_accuracy = self.test(x_test, y_test);
             println!("test accuracy:\t{}", self.test_accuracy);
         }
     }
@@ -192,11 +219,19 @@ impl StopCondition {
 }
 
 pub struct NNOptions {
+    /// optionally print a log message at the end of every epoch
     pub log_interval: Option<usize>,
+    /// print a log message after every batch
     pub log_batches: bool,
     pub test: bool,
     pub batch_size: usize,
     pub learning_rate: f32,
+    /// multiply the lr by this factor is the loss does not improve for [patience] epochs
+    pub learning_rate_factor: f32,
+    /// after how many stale epochs should lr be multiplied by [learning_rate_factor]
+    pub patience: Option<usize>,
+    /// gradually increase the lr over the first few epochs
+    pub warmup_time: Option<usize>,
     pub stop_condition: StopCondition,
 }
 
@@ -204,10 +239,13 @@ impl Default for NNOptions {
     fn default() -> Self {
         NNOptions {
             batch_size: 1,
-            learning_rate: 0.1,
+            learning_rate: 0.001,
+            learning_rate_factor: 0.75,
+            patience: None,
             log_interval: None,
             log_batches: false,
             test: false,
+            warmup_time: None,
             stop_condition: StopCondition::Epoch(200),
         }
     }
@@ -258,6 +296,9 @@ impl NNBuilder {
 
     pub fn build(mut self) -> NN {
         let mut optimizer = self.optimizer_type.optimizer();
+        if let StopCondition::TestAccuracy(_) = self.options.stop_condition {
+            self.options.test = true;
+        }
 
         for layer in &mut self.layers {
             layer.init(&mut optimizer);

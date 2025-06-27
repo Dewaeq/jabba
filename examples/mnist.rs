@@ -26,6 +26,8 @@ fn main() {
         test: true,
         batch_size: 120,
         learning_rate: 0.001,
+        patience: Some(3),
+        warmup_time: Some(4),
         stop_condition: StopCondition::TestAccuracy(0.98),
         ..Default::default()
     };

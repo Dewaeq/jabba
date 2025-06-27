@@ -20,7 +20,7 @@ fn main() {
         test: true,
         log_interval: Some(5000),
         batch_size: 2,
-        learning_rate: 0.001,
+        learning_rate: 0.01,
         stop_condition: StopCondition::Loss(0.002),
         ..Default::default()
     };
