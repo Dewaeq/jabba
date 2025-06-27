@@ -34,8 +34,6 @@ impl Optimizer for AdamOptimizer {
         let beta_1_power = beta_1.powi(step);
         let beta_2_power = beta_2.powi(step);
 
-        let alpha = learning_rate * (1. - beta_2_power).sqrt() / (1. - beta_1_power);
-
         let m = &mut self.momentum[index];
         let v = &mut self.velocity[index];
 
@@ -48,14 +46,15 @@ impl Optimizer for AdamOptimizer {
         *m += &buffer;
 
         // calculate new velocity
-        pow_to(&gradient, 2, &mut buffer);
+        pow_to(gradient, 2, &mut buffer);
         buffer -= &*v;
         buffer *= 1. - beta_2;
         *v += &buffer;
 
-        sqrt_to(&v, &mut buffer);
+        sqrt_to(v, &mut buffer);
+        buffer /= (1. - beta_2_power).sqrt();
         buffer.add_scalar_mut(epsilon);
 
-        *variables -= alpha * m.component_div(&buffer);
+        *variables -= (learning_rate / (1. - beta_1_power)) * m.component_div(&buffer);
     }
 }
