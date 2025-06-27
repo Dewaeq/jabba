@@ -19,9 +19,10 @@ fn main() {
     let options = NNOptions {
         test: true,
         log_interval: Some(5000),
-        batch_size: 2,
-        learning_rate: 0.001,
-        stop_condition: StopCondition::Loss(0.002),
+        batch_size: 4,
+        learning_rate: 0.05,
+        // stop_condition: StopCondition::Loss(0.002),
+        stop_condition: StopCondition::TestAccuracy(0.97),
         ..Default::default()
     };
 
@@ -29,7 +30,7 @@ fn main() {
         .options(options)
         .add_layer(2, ActivationType::Sigmoid)
         .add_layer(2, ActivationType::Sigmoid)
-        .optimizer(OptimizerType::Adam)
+        // .optimizer(OptimizerType::Adam)
         .build();
 
     nn.train(&x_train, &y_train, &x_train, &y_train);

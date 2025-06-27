@@ -12,8 +12,8 @@ pub(crate) struct Layer {
     pub(crate) a: Matrix,
     pub(crate) z: Matrix,
 
-    weights_index: usize,
-    bias_index: usize,
+    pub(crate) weights_index: usize,
+    pub(crate) bias_index: usize,
 }
 
 impl Layer {
@@ -37,6 +37,15 @@ impl Layer {
     pub(crate) fn init(&mut self, optimizer: &mut Box<dyn Optimizer>) {
         self.weights_index = optimizer.add_variables(self.weights.shape());
         self.bias_index = optimizer.add_variables(self.bias.shape());
+    }
+
+    pub(crate) fn step_hard(&self, data: &Matrix) -> (Matrix, Matrix) {
+        let mut z = &self.weights * data;
+        z.column_iter_mut().for_each(|mut col| col += &self.bias);
+
+        let a = z.map(self.activation.f);
+
+        (a, z)
     }
 
     pub(crate) fn step(&mut self, data: &Matrix) -> Matrix {
@@ -83,10 +92,28 @@ impl Layer {
             self.weights_index,
             &mut self.weights,
         );
-        optimizer.step(learning_rate, &db, step, self.bias_index, &mut self.bias);
+        optimizer.step(learning_rate, db, step, self.bias_index, &mut self.bias);
+        self.weights.transpose() * delta
+    }
+
+    pub(crate) fn back_prop(
+        &self,
+        mut delta: Matrix,
+        prev_a: &Matrix,
+        z: &Matrix,
+    ) -> (Matrix, Matrix, Matrix) {
+        let mut buffer = unsafe { empty_like(z.shape()) };
+        self.activation.derv(z, &mut buffer);
+
+        delta.component_mul_assign(&buffer);
+
+        let dw = &delta * prev_a.transpose();
+        let db = delta
+            .column_sum()
+            .reshape_generic(Dyn(delta.nrows()), Dyn(1));
 
         let next_delta = self.weights.transpose() * delta;
-        next_delta
+        (dw, db, next_delta)
     }
 }
 

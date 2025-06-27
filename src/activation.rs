@@ -35,8 +35,8 @@ impl ActivationType {
 pub(crate) struct Activation {
     pub(crate) activation_type: ActivationType,
 
-    f: fn(f32) -> f32,
-    df: fn(f32) -> f32,
+    pub(crate) f: fn(f32) -> f32,
+    pub(crate) df: fn(f32) -> f32,
 }
 
 impl Activation {

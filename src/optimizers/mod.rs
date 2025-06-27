@@ -47,3 +47,6 @@ impl Default for Box<dyn Optimizer> {
         DefaultOptimizer::boxed()
     }
 }
+
+pub struct ThreadSafeOptimizer(pub Box<dyn Optimizer>);
+unsafe impl Sync for ThreadSafeOptimizer {}
