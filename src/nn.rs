@@ -60,8 +60,14 @@ impl NN {
             };
 
             let optimizer = &mut self.optimizer;
-
-            delta = layer.back_propagate(delta, prev_a, learning_rate, optimizer, step);
+            delta = layer.back_propagate(
+                delta,
+                prev_a,
+                learning_rate,
+                self.options.weight_decay,
+                optimizer,
+                step,
+            );
         }
     }
 
@@ -117,6 +123,11 @@ impl NN {
             }
 
             current_loss /= num_samples as f32;
+            if self.options.weight_decay != 0. {
+                for layer in &self.layers {
+                    current_loss += self.options.weight_decay * layer.weights.norm_squared();
+                }
+            }
 
             if self.options.test {
                 self.test_accuracy = self.test(x_test, y_test);
@@ -233,6 +244,7 @@ pub struct NNOptions {
     /// gradually increase the lr over the first few epochs
     pub warmup_time: Option<usize>,
     pub stop_condition: StopCondition,
+    pub weight_decay: f32,
 }
 
 impl Default for NNOptions {
@@ -242,11 +254,12 @@ impl Default for NNOptions {
             learning_rate: 0.001,
             learning_rate_factor: 0.75,
             patience: None,
-            log_interval: None,
-            log_batches: false,
-            test: false,
+            log_interval: Some(1),
+            log_batches: true,
+            test: true,
             warmup_time: None,
             stop_condition: StopCondition::Epoch(200),
+            weight_decay: 0.0001,
         }
     }
 }

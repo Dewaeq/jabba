@@ -63,6 +63,7 @@ impl Layer {
         mut delta: Matrix,
         prev_a: &Matrix,
         learning_rate: f32,
+        weight_decay: f32,
         optimizer: &mut Box<dyn Optimizer>,
         step: usize,
     ) -> Matrix {
@@ -71,7 +72,7 @@ impl Layer {
 
         delta.component_mul_assign(&buffer);
 
-        let dw = &delta * prev_a.transpose();
+        let dw = &delta * prev_a.transpose() + weight_decay * &self.weights;
         let db = &delta
             .column_sum()
             .reshape_generic(Dyn(delta.nrows()), Dyn(1));
