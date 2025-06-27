@@ -10,18 +10,19 @@ use jabba::{
 };
 
 fn main() {
-    let y_train = read_labels_file("C:/src/projects/jabba/examples/mnist/train-labels.idx1-ubyte");
-    let x_train = read_images_file("C:/src/projects/jabba/examples/mnist/train-images.idx3-ubyte");
+    let y_train = read_labels_file("examples/mnist/train-labels.idx1-ubyte");
+    let x_train = read_images_file("examples/mnist/train-images.idx3-ubyte");
 
     let y_train = one_hot(&y_train);
 
-    let y_test = read_labels_file("C:/src/projects/jabba/examples/mnist/t10k-labels.idx1-ubyte");
-    let x_test = read_images_file("C:/src/projects/jabba/examples/mnist/t10k-images.idx3-ubyte");
+    let y_test = read_labels_file("examples/mnist/t10k-labels.idx1-ubyte");
+    let x_test = read_images_file("examples/mnist/t10k-images.idx3-ubyte");
 
     let y_test = one_hot(&y_test);
 
     let options = NNOptions {
         log_interval: Some(1),
+        log_batches: true,
         test: true,
         batch_size: 120,
         learning_rate: 0.001,

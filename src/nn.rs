@@ -91,6 +91,25 @@ impl NN {
                     step,
                 );
 
+                if self.options.log_batches {
+                    print!("\x1B[2J\x1B[1;1H");
+                    println!("epoch:\t\t{epoch}");
+                    println!(
+                        "epoch progress: {}%",
+                        (i as f32) / (num_samples as f32) * 100.
+                    );
+
+                    println!("current loss:\t{}", current_loss / i as f32);
+                    println!(
+                        "epochs/sec:\t{}",
+                        epoch as f32 / start.elapsed().as_secs_f32()
+                    );
+
+                    if self.options.test {
+                        println!("test accuracy:\t{}", self.test_accuracy);
+                    }
+                }
+
                 current_loss += (predicted - batch_y).norm_squared();
                 step += 1;
             }
@@ -174,6 +193,7 @@ impl StopCondition {
 
 pub struct NNOptions {
     pub log_interval: Option<usize>,
+    pub log_batches: bool,
     pub test: bool,
     pub batch_size: usize,
     pub learning_rate: f32,
@@ -186,6 +206,7 @@ impl Default for NNOptions {
             batch_size: 1,
             learning_rate: 0.1,
             log_interval: None,
+            log_batches: false,
             test: false,
             stop_condition: StopCondition::Epoch(200),
         }
